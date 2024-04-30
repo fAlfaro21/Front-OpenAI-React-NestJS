@@ -1,10 +1,15 @@
 import { useState } from 'react';
-import { GptMessage, MyMessage, TextMessageBox, TextMessageBoxFile, TypingLoader } from '../../components';
-import { TextMessageBoxSelect } from '../../components/chat-input-boxes/TextMessageBoxSelect';
+import { GptMessage, GptOrthographyMessage, MyMessage, TextMessageBox, TypingLoader } from '../../components';
+import { orthographyUseCase } from '../../../core/use-cases';
 
 interface Message {
   text: string;
   isGpt: boolean;
+  info?: {
+    userScore: number;
+    errors: string[];
+    message: string;
+  }
 }
 
 export const OrthographyPage = () => {
@@ -16,11 +21,28 @@ export const OrthographyPage = () => {
     setIsLoading(true);
     setMessages( (prev) => [...prev, { text: text , isGpt: false }] );
 
-    //Todo USE CASE
-
-    setIsLoading(false);
-
+    //También puedo desestrucutrar los valores a partir de data:
+    //const { ok, errors, message, userScore } = await orthographyUseCase( text );
+    const data = await orthographyUseCase( text );
+    if ( !data.ok ){
+      setMessages( (prev) => [...prev, { text: 'No se pudo realizar la corrección', isGpt: true }] );
+    } else {
+      setMessages( (prev) => [...prev, { 
+        text: data.message, 
+        isGpt: true ,
+        info: {
+          errors: data.errors, 
+          message: data.message,
+          userScore: data.userScore,
+        }
+      }] );
+    }
+    
+    
+    
     //Todo Añadir el mensaje de isGPT en true
+    
+    setIsLoading( false )
   };
 
   return (
@@ -34,7 +56,13 @@ export const OrthographyPage = () => {
             messages.map( (message, index) => (
               message.isGpt
                 ? (
-                  <GptMessage key={ index } text="Esto es de OpenAI" />
+                  <GptOrthographyMessage 
+                    key={ index } 
+                    //{ ...message.info! }
+                    errors={ message.info!.errors }
+                    message={ message.info!.message }
+                    userScore={ message.info!.userScore }
+                  />
                 )
                 : (
                   <MyMessage key={ index } text={ message.text } />
