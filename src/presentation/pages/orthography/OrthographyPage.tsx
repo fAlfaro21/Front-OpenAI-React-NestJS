@@ -38,8 +38,6 @@ export const OrthographyPage = () => {
       }] );
     }
     
-    
-    
     //Todo Añadir el mensaje de isGPT en true
     
     setIsLoading( false )
